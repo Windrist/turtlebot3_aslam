@@ -8,7 +8,6 @@ from geometry_msgs.msg import PoseStamped
 from numpy import floor
 from numpy.linalg import norm
 from numpy import inf
-# ________________________________________________________________________________
 
 
 class robot:
@@ -21,20 +20,17 @@ class robot:
         self.name = name
         self.global_frame = rospy.get_param('~global_frame', 'map')
         self.robot_frame = rospy.get_param('~robot_frame', 'base_link')
-        self.plan_service = rospy.get_param(
-            '~plan_service', '/move_base/NavfnROS/make_plan')
+        self.plan_service = rospy.get_param('~plan_service', '/move_base/make_plan')
         self.listener = tf.TransformListener()
-        self.listener.waitForTransform(
-            self.global_frame, self.name+'/'+self.robot_frame, rospy.Time(0), rospy.Duration(10.0))
+        self.listener.waitForTransform(self.global_frame, self.name + '/' + self.robot_frame, rospy.Time(0), rospy.Duration(10.0))
         cond = 0
         while cond == 0:
             try:
                 rospy.loginfo('Waiting for the robot transform')
-                (trans, rot) = self.listener.lookupTransform(
-                    self.global_frame, '/'+self.robot_frame, rospy.Time(0))
+                (trans, rot) = self.listener.lookupTransform(self.global_frame, '/' + self.robot_frame, rospy.Time(0))
                 cond = 1
             except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
-                cond == 0
+                cond = 0
         self.position = array([trans[0], trans[1]])
         self.assigned_point = self.position
         self.client = actionlib.SimpleActionClient('/move_base', MoveBaseAction)
@@ -42,8 +38,7 @@ class robot:
         robot.goal.target_pose.header.frame_id = "map"
         robot.goal.target_pose.header.stamp = rospy.Time.now()
         rospy.wait_for_service(self.plan_service)
-        self.make_plan = rospy.ServiceProxy(
-            self.name+self.plan_service, GetPlan)
+        self.make_plan = rospy.ServiceProxy(self.name + self.plan_service, GetPlan)
         robot.start.header.frame_id = self.global_frame
         robot.end.header.frame_id = self.global_frame
 
@@ -51,11 +46,10 @@ class robot:
         cond = 0
         while cond == 0:
             try:
-                (trans, rot) = self.listener.lookupTransform(
-                    self.global_frame, self.name+'/'+self.robot_frame, rospy.Time(0))
+                (trans, rot) = self.listener.lookupTransform(self.global_frame, self.name + '/' + self.robot_frame, rospy.Time(0))
                 cond = 1
             except (tf.LookupException, tf.ConnectivityException, tf.ExtrapolationException):
-                cond == 0
+                cond = 0
         self.position = array([trans[0], trans[1]])
         return self.position
 
@@ -90,17 +84,12 @@ def index_of_point(mapData, Xp):
     Xstartx = mapData.info.origin.position.x
     Xstarty = mapData.info.origin.position.y
     width = mapData.info.width
-    Data = mapData.data
-    index = int(	(floor((Xp[1]-Xstarty)/resolution) *
-                  width)+(floor((Xp[0]-Xstartx)/resolution)))
+    index = int(floor((Xp[1] - Xstarty) / resolution) * width + floor((Xp[0] - Xstartx) / resolution))
     return index
 
-
 def point_of_index(mapData, i):
-    y = mapData.info.origin.position.y + \
-        (i//mapData.info.width)*mapData.info.resolution
-    x = mapData.info.origin.position.x + \
-        (i-(i//mapData.info.width)*(mapData.info.width))*mapData.info.resolution
+    y = mapData.info.origin.position.y + i / mapData.info.width * mapData.info.resolution
+    x = mapData.info.origin.position.x + i % mapData.info.width * mapData.info.resolution
     return array([x, y])
 # ________________________________________________________________________________
 
@@ -108,45 +97,59 @@ def point_of_index(mapData, i):
 def informationGain(mapData, point, r):
     infoGain = 0
     index = index_of_point(mapData, point)
-    r_region = int(r/mapData.info.resolution)
-    init_index = index-r_region*(mapData.info.width+1)
+    r_region = int(r / mapData.info.resolution)
+    init_index = index - r_region * (mapData.info.width + 1)
     for n in range(0, 2*r_region+1):
-        start = n*mapData.info.width+init_index
-        end = start+2*r_region
-        limit = ((start/mapData.info.width)+2)*mapData.info.width
+        start = n * mapData.info.width + init_index
+        end = start + 2 * r_region
         for i in range(start, end+1):
-            if (i >= 0 and i < limit and i < len(mapData.data)):
-                if(mapData.data[i] == -1 and norm(array(point)-point_of_index(mapData, i)) <= r):
+            if (i >= 0 and i < len(mapData.data)):
+                if (mapData.data[i] == -1 and norm(array(point) - point_of_index(mapData, i)) <= r):
                     infoGain += 1
-    return infoGain*(mapData.info.resolution**2)
+    return infoGain * (mapData.info.resolution ** 2)
+# ________________________________________________________________________________
+
+
+def obstacleGain(mapData, point, r):
+    infoGain = 0
+    index = index_of_point(mapData, point)
+    r_region = int(r / mapData.info.resolution)
+    init_index = index - r_region * (mapData.info.width + 1)
+    for n in range(0, 2*r_region+1):
+        start = n * mapData.info.width + init_index
+        end = start + 2 * r_region
+        for i in range(start, end+1):
+            if (i >= 0 and i < len(mapData.data)):
+                if (mapData.data[i] == 100 and norm(array(point) - point_of_index(mapData, i)) <= r):
+                    infoGain += 1
+    return infoGain * (mapData.info.resolution ** 2)
 # ________________________________________________________________________________
 
 
 def discount(mapData, assigned_pt, centroids, infoGain, r):
     index = index_of_point(mapData, assigned_pt)
-    r_region = int(r/mapData.info.resolution)
-    init_index = index-r_region*(mapData.info.width+1)
+    r_region = int(r / mapData.info.resolution)
+    init_index = index - r_region * (mapData.info.width + 1)
     for n in range(0, 2*r_region+1):
-        start = n*mapData.info.width+init_index
-        end = start+2*r_region
-        limit = ((start/mapData.info.width)+2)*mapData.info.width
+        start = n * mapData.info.width + init_index
+        end = start + 2 * r_region
         for i in range(start, end+1):
-            if (i >= 0 and i < limit and i < len(mapData.data)):
+            if (i >= 0 and i < len(mapData.data)):
                 for j in range(0, len(centroids)):
                     current_pt = centroids[j]
-                    if(mapData.data[i] == -1 and norm(point_of_index(mapData, i)-current_pt) <= r and norm(point_of_index(mapData, i)-assigned_pt) <= r):
+                    if (mapData.data[i] != -1 and norm(point_of_index(mapData, i) - current_pt) <= r and norm(point_of_index(mapData, i) - assigned_pt) <= r):
                         # this should be modified, subtract the area of a cell, not 1
-                        infoGain[j] -= 1
+                        infoGain[j] -= mapData.info.resolution ** 2
     return infoGain
 # ________________________________________________________________________________
 
 
 def pathCost(path):
     if (len(path) > 0):
-        i = len(path)/2
+        i = len(path) / 2
         p1 = array([path[i-1].pose.position.x, path[i-1].pose.position.y])
         p2 = array([path[i].pose.position.x, path[i].pose.position.y])
-        return norm(p1-p2)*(len(path)-1)
+        return norm(p1 - p2)*(len(path) - 1)
     else:
         return inf
 # ________________________________________________________________________________
@@ -155,14 +158,13 @@ def pathCost(path):
 def unvalid(mapData, pt):
     index = index_of_point(mapData, pt)
     r_region = 5
-    init_index = index-r_region*(mapData.info.width+1)
+    init_index = index - r_region * (mapData.info.width + 1)
     for n in range(0, 2*r_region+1):
-        start = n*mapData.info.width+init_index
-        end = start+2*r_region
-        limit = ((start/mapData.info.width)+2)*mapData.info.width
+        start = n * mapData.info.width + init_index
+        end = start + 2 * r_region
         for i in range(start, end+1):
-            if (i >= 0 and i < limit and i < len(mapData.data)):
-                if(mapData.data[i] == 1):
+            if (i >= 0 and i < len(mapData.data)):
+                if (mapData.data[i] == 1):
                     return True
     return False
 # ________________________________________________________________________________
@@ -172,7 +174,7 @@ def Nearest(V, x):
     n = inf
     i = 0
     for i in range(0, V.shape[0]):
-        n1 = norm(V[i, :]-x)
+        n1 = norm(V[i, :] - x)
         if (n1 < n):
             n = n1
             result = i
@@ -183,10 +185,8 @@ def Nearest(V, x):
 
 def Nearest2(V, x):
     n = inf
-    result = 0
     for i in range(0, len(V)):
-        n1 = norm(V[i]-x)
-
+        n1 = norm(V[i] - x)
         if (n1 < n):
             n = n1
     return i
@@ -202,10 +202,26 @@ def gridValue(mapData, Xp):
     Data = mapData.data
     # returns grid value at "Xp" location
     # map data:  100 occupied      -1 unknown       0 free
-    index = (floor((Xp[1]-Xstarty)/resolution)*width) + \
-        (floor((Xp[0]-Xstartx)/resolution))
+    index = floor((Xp[1] - Xstarty) / resolution) * width + floor((Xp[0] - Xstartx) / resolution)
 
     if int(index) < len(Data):
         return Data[int(index)]
     else:
         return 100
+
+def bestPoint(mapData, point, r):
+    maxObsGain = 0
+    maxPoint = []
+    index = index_of_point(mapData, point)
+    r_region = int(r / mapData.info.resolution)
+    init_index = index - r_region * (mapData.info.width + 1)
+    for n in range(0, 2*r_region+1):
+        start = n * mapData.info.width + init_index
+        end = start + 2 * r_region
+        for i in range(start, end+1):
+            if (i >= 0 and i < len(mapData.data) and mapData.data[i] != -1):
+                obsGain = obstacleGain(mapData, point_of_index(mapData, i), r)
+                if obsGain > maxObsGain:
+                    maxObsGain = obsGain
+                    maxPoint = point_of_index(mapData, i)
+    return maxPoint

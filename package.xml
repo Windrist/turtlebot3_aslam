@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>ros_autonomous_slam</name>
+  <name>turtlebot3_aslam</name>
   <version>1.0.0</version>
   <description>The ros package that implements RRT exploration on turtlebot3 Wffle Pi robot</description>
 
@@ -68,7 +68,7 @@
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>
-    <!-- Other tools can request additional information be placed here -->
+	<!-- Other tools can request additional information be placed here -->
 
   </export>
 </package>

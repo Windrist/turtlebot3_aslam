@@ -9,9 +9,9 @@ from nav_msgs.msg import OccupancyGrid
 from geometry_msgs.msg import PointStamped
 import tf
 from numpy import array, vstack, delete
-from functions import gridValue, informationGain
+from functions import gridValue, informationGain, obstacleGain
 from sklearn.cluster import MeanShift
-from ros_autonomous_slam.msg import PointArray
+from rrt_final.msg import PointArray
 
 # Subscribers' callbacks------------------------------
 mapData = OccupancyGrid()
@@ -200,22 +200,39 @@ def node():
 # -------------------------------------------------------------------------
 # clearing old frontiers
 
-        z = 0
-        while z < len(centroids):
-            cond = False
-            temppoint.point.x = centroids[z][0]
-            temppoint.point.y = centroids[z][1]
+        if len(centroids) > 1:
+            z = 0
+            while z < len(centroids):
+                cond = False
+                temppoint.point.x = centroids[z][0]
+                temppoint.point.y = centroids[z][1]
+                for i in range(0, n_robots):
 
-            for i in range(0, n_robots):
+                    transformedPoint = tfLisn.transformPoint(
+                        globalmaps[i].header.frame_id, temppoint)
+                    x = array([transformedPoint.point.x, transformedPoint.point.y])
+                    cond = gridValue(globalmaps[i], x) > threshold
+                if cond:
+                    centroids = delete(centroids, (z), axis=0)
+                    z = z-1
+                z += 1
 
-                transformedPoint = tfLisn.transformPoint(
-                    globalmaps[i].header.frame_id, temppoint)
-                x = array([transformedPoint.point.x, transformedPoint.point.y])
-                cond = (gridValue(globalmaps[i], x) > threshold) or cond
-            if (cond or (informationGain(mapData, [centroids[z][0], centroids[z][1]], info_radius*0.5)) < 0.2):
-                centroids = delete(centroids, (z), axis=0)
-                z = z-1
-            z += 1
+            suminfoGain = 0
+            sumobsGain = 0
+            if len(centroids) > 0:
+                for i in centroids:
+                    suminfoGain += informationGain(mapData, [i[0], i[1]], info_radius)
+                    sumobsGain += obstacleGain(mapData, [i[0], i[1]], info_radius)
+                avginfoGain = suminfoGain / len(centroids)
+                avgobsGain = sumobsGain / len(centroids)
+            z = 0
+            while z < len(centroids):
+                infoGain = informationGain(mapData, [centroids[z][0], centroids[z][1]], info_radius)
+                obsGain = obstacleGain(mapData, [centroids[z][0], centroids[z][1]], info_radius)
+                if ((infoGain < avginfoGain) or (obsGain > avgobsGain)):
+                    centroids = delete(centroids, (z), axis=0)
+                    z = z-1
+                z += 1
 # -------------------------------------------------------------------------
 # publishing
         arraypoints.points = []
