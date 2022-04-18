@@ -12,12 +12,10 @@ float rdm::randomize() {
     return float(rand()) / float(RAND_MAX);
 }
 
-
 // Norm function 
 float Norm(std::vector<float> x1, std::vector<float> x2) {
     return pow(pow(x2[0] - x1[0], 2) + pow(x2[1] - x1[1], 2), 0.5);
 }
-
 
 // Sign function
 float sign(float n) {
@@ -26,7 +24,6 @@ float sign(float n) {
     else
         return 1.0;
 }
-
 
 // Nearest function
 std::vector<float> Nearest(std::vector<std::vector<float>> V, std::vector<float> x) {
@@ -44,14 +41,12 @@ std::vector<float> Nearest(std::vector<std::vector<float>> V, std::vector<float>
     return V[min_index];
 }
 
-
-
-// Steer function
+// Steer Function
 std::vector<float> Steer(std::vector<float> x_nearest, std::vector<float> x_rand, float eta) {
     std::vector<float> x_new;
 
     if (Norm(x_nearest, x_rand) <= eta)
-        x_new=x_rand;
+        x_new = x_rand;
     else {
         float m = (x_rand[1] - x_nearest[1]) / (x_rand[0] - x_nearest[0]);
 
@@ -66,8 +61,7 @@ std::vector<float> Steer(std::vector<float> x_nearest, std::vector<float> x_rand
     return x_new;
 }
 
-
-// gridValue function
+// gridValue Function
 int gridValue(nav_msgs::OccupancyGrid &mapData, std::vector<float> Xp) {
 
     float resolution = mapData.info.resolution;
@@ -77,19 +71,21 @@ int gridValue(nav_msgs::OccupancyGrid &mapData, std::vector<float> Xp) {
     float width = mapData.info.width;
     std::vector<signed char> Data = mapData.data;
 
-    // returns grid value at "Xp" location
-    // map data:  100 occupied      -1 unknown       0 free
+    // Returns Grid Value at "Xp" Location
+        // Map data: 100 == Occupied
+        // -1 == Unknown
+        // 0 == Free
+    // 
     float indx = floor((Xp[1] - Xstarty) / resolution) * width + floor((Xp[0] - Xstartx) / resolution);
     int out;
     out = Data[int(indx)];
     return out;
 }
 
+// obstacleFree Function
 
-// ObstacleFree function-------------------------------------
-
-char ObstacleFree(std::vector<float> xnear, std::vector<float> &xnew, nav_msgs::OccupancyGrid mapsub) {
-    float rez = float(mapsub.info.resolution) * .2;
+char obstacleFree(std::vector<float> xnear, std::vector<float> &xnew, nav_msgs::OccupancyGrid mapsub) {
+    float rez = float(mapsub.info.resolution);
     float stepz = int(ceil(Norm(xnew, xnear)) / rez); 
     std::vector<float> xi = xnear;
     char obs = 0;

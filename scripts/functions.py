@@ -98,98 +98,15 @@ def informationGain(mapData, point, r):
     infoGain = 0
     index = index_of_point(mapData, point)
     r_region = int(r / mapData.info.resolution)
-    init_index = index - r_region * (mapData.info.width + 1)
+    init_index = index - r_region  * (mapData.info.width + 1)
     for n in range(0, 2*r_region+1):
         start = n * mapData.info.width + init_index
         end = start + 2 * r_region
         for i in range(start, end+1):
             if (i >= 0 and i < len(mapData.data)):
-                if (mapData.data[i] == -1 and norm(array(point) - point_of_index(mapData, i)) <= r):
+                if mapData.data[i] < 100:
                     infoGain += 1
-    return infoGain * (mapData.info.resolution ** 2)
-# ________________________________________________________________________________
-
-
-def obstacleGain(mapData, point, r):
-    infoGain = 0
-    index = index_of_point(mapData, point)
-    r_region = int(r / mapData.info.resolution)
-    init_index = index - r_region * (mapData.info.width + 1)
-    for n in range(0, 2*r_region+1):
-        start = n * mapData.info.width + init_index
-        end = start + 2 * r_region
-        for i in range(start, end+1):
-            if (i >= 0 and i < len(mapData.data)):
-                if (mapData.data[i] == 100 and norm(array(point) - point_of_index(mapData, i)) <= r):
-                    infoGain += 1
-    return infoGain * (mapData.info.resolution ** 2)
-# ________________________________________________________________________________
-
-
-def discount(mapData, assigned_pt, centroids, infoGain, r):
-    index = index_of_point(mapData, assigned_pt)
-    r_region = int(r / mapData.info.resolution)
-    init_index = index - r_region * (mapData.info.width + 1)
-    for n in range(0, 2*r_region+1):
-        start = n * mapData.info.width + init_index
-        end = start + 2 * r_region
-        for i in range(start, end+1):
-            if (i >= 0 and i < len(mapData.data)):
-                for j in range(0, len(centroids)):
-                    current_pt = centroids[j]
-                    if (mapData.data[i] != -1 and norm(point_of_index(mapData, i) - current_pt) <= r and norm(point_of_index(mapData, i) - assigned_pt) <= r):
-                        # this should be modified, subtract the area of a cell, not 1
-                        infoGain[j] -= mapData.info.resolution ** 2
-    return infoGain
-# ________________________________________________________________________________
-
-
-def pathCost(path):
-    if (len(path) > 0):
-        i = len(path) / 2
-        p1 = array([path[i-1].pose.position.x, path[i-1].pose.position.y])
-        p2 = array([path[i].pose.position.x, path[i].pose.position.y])
-        return norm(p1 - p2)*(len(path) - 1)
-    else:
-        return inf
-# ________________________________________________________________________________
-
-
-def unvalid(mapData, pt):
-    index = index_of_point(mapData, pt)
-    r_region = 5
-    init_index = index - r_region * (mapData.info.width + 1)
-    for n in range(0, 2*r_region+1):
-        start = n * mapData.info.width + init_index
-        end = start + 2 * r_region
-        for i in range(start, end+1):
-            if (i >= 0 and i < len(mapData.data)):
-                if (mapData.data[i] == 1):
-                    return True
-    return False
-# ________________________________________________________________________________
-
-
-def Nearest(V, x):
-    n = inf
-    i = 0
-    for i in range(0, V.shape[0]):
-        n1 = norm(V[i, :] - x)
-        if (n1 < n):
-            n = n1
-            result = i
-    return result
-
-# ________________________________________________________________________________
-
-
-def Nearest2(V, x):
-    n = inf
-    for i in range(0, len(V)):
-        n1 = norm(V[i] - x)
-        if (n1 < n):
-            n = n1
-    return i
+    return infoGain * mapData.info.resolution / r
 # ________________________________________________________________________________
 
 
@@ -208,20 +125,3 @@ def gridValue(mapData, Xp):
         return Data[int(index)]
     else:
         return 100
-
-def bestPoint(mapData, point, r):
-    maxObsGain = 0
-    maxPoint = []
-    index = index_of_point(mapData, point)
-    r_region = int(r / mapData.info.resolution)
-    init_index = index - r_region * (mapData.info.width + 1)
-    for n in range(0, 2*r_region+1):
-        start = n * mapData.info.width + init_index
-        end = start + 2 * r_region
-        for i in range(start, end+1):
-            if (i >= 0 and i < len(mapData.data) and mapData.data[i] != -1):
-                obsGain = obstacleGain(mapData, point_of_index(mapData, i), r)
-                if obsGain > maxObsGain:
-                    maxObsGain = obsGain
-                    maxPoint = point_of_index(mapData, i)
-    return maxPoint

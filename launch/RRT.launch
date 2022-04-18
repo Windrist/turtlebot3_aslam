@@ -9,23 +9,23 @@
   <node pkg="turtlebot3_aslam" type="global_rrt_detector" name="global_detector" output="screen">
   <param name="eta" value="$(arg Geta)"/>
   <param name="map_topic" value="/map"/>
+  <param name="costmap_topic" value="/move_base/global_costmap/costmap"/>
+  <param name="robot_frame" value="/base_link"/>
   </node>
   
   <node pkg="turtlebot3_aslam" type="local_rrt_detector" name="local_detector" output="screen">
   <param name="eta" value="$(arg eta)"/>
   <param name="map_topic" value="/map"/>
+  <param name="costmap_topic" value="/move_base/local_costmap/costmap"/>
   <param name="robot_frame" value="/base_link"/>
   </node>
  
   
   <node pkg="turtlebot3_aslam" type="filter.py" name="filter" output="screen">
   <param name="map_topic" value="/map"/>
-  <param name="info_radius" value="1"/> 
-  <param name="costmap_clearing_threshold" value="0"/>
+  <param name="costmap_clearing_threshold" value="70"/>
   <param name="global_costmap_topic" value="/move_base/global_costmap/costmap"/>
   <param name="goals_topic" value="/detected_points"/>
-  <param name="namespace" value=""/> 
-  <param name="n_robots" value="1"/>
   <param name="rate" value="100"/>
   </node>
   
@@ -33,12 +33,8 @@
   <param name="map_topic" value="/map"/>
   <param name="global_frame" value="/map"/>
   <param name="info_radius" value="1"/> 
-  <param name="info_multiplier" value="3.0"/> 
-  <param name="hysteresis_radius" value="3.0"/> 
   <param name="hysteresis_gain" value="2.0"/> 
   <param name="frontiers_topic" value="/filtered_points"/> 
-  <param name="n_robots" value="1"/>
-  <param name="namespace" value=""/>
   <param name="delay_after_assignement" value="0.5"/>
   <param name="rate" value="100"/>
   </node>
