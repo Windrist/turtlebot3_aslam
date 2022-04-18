@@ -1,13 +1,12 @@
 import rospy
 import tf
+import math
 from numpy import array
 import actionlib
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 from nav_msgs.srv import GetPlan
 from geometry_msgs.msg import PoseStamped
 from numpy import floor
-from numpy.linalg import norm
-from numpy import inf
 
 
 class robot:
@@ -104,9 +103,25 @@ def informationGain(mapData, point, r):
         end = start + 2 * r_region
         for i in range(start, end+1):
             if (i >= 0 and i < len(mapData.data)):
-                if mapData.data[i] < 100:
+                if mapData.data[i] == -1:
                     infoGain += 1
-    return infoGain * mapData.info.resolution / r
+    return (infoGain * (mapData.info.resolution ** 2)) / (2 * math.pi * r ** 2)
+# ________________________________________________________________________________
+
+
+def obstacleGain(mapData, point, r):
+    obstacleGain = 0
+    index = index_of_point(mapData, point)
+    r_region = int(r / mapData.info.resolution)
+    init_index = index - r_region  * (mapData.info.width + 1)
+    for n in range(0, 2*r_region+1):
+        start = n * mapData.info.width + init_index
+        end = start + 2 * r_region
+        for i in range(start, end+1):
+            if (i >= 0 and i < len(mapData.data)):
+                if mapData.data[i] > 70:
+                    obstacleGain += 1
+    return (obstacleGain * (mapData.info.resolution ** 2)) / (2 * math.pi * r ** 2)
 # ________________________________________________________________________________
 
 

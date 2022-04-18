@@ -9,13 +9,14 @@ from nav_msgs.msg import OccupancyGrid
 from geometry_msgs.msg import PointStamped
 import tf
 from numpy import array, vstack, delete
-from functions import gridValue, informationGain
+from functions import gridValue, informationGain, obstacleGain
 from sklearn.cluster import MeanShift
 from turtlebot3_aslam.msg import PointArray
 
 # Subscribers' callbacks------------------------------
 mapData = OccupancyGrid()
 globalmap = OccupancyGrid()
+localmap = OccupancyGrid()
 frontiers = []
 
 
@@ -38,18 +39,27 @@ def globalMap(data):
     global globalmap
     globalmap = data
 
+
+def localMap(data):
+    global localmap
+    localmap = data
+
 # Node ----------------------------------------------
 def node():
-    global frontiers, mapData, global1, global2, global3, globalmap
+    global frontiers, mapData, global1, global2, global3, globalmap, localmap
     rospy.init_node('filter', anonymous=False)
 
     # Fetching all parameters
     map_topic = rospy.get_param('~map_topic', 'map')
-    threshold = rospy.get_param('~costmap_clearing_threshold', 70)
+    door_length = rospy.get_param('~door_length', 0.5)
+    wall_thickness = rospy.get_param('~wall_thickness', 0.2)
+    threshold = rospy.get_param('~costmap_clearing_threshold', 30)
     goals_topic = rospy.get_param('~goals_topic', '/detected_points')
     rateHz = rospy.get_param('~rate', 100)
     global_costmap_topic = rospy.get_param(
         '~global_costmap_topic', '/move_base/global_costmap/costmap')
+    local_costmap_topic = rospy.get_param(
+        '~local_costmap_topic', '/move_base/local_costmap/costmap')
     robot_frame = rospy.get_param('~robot_frame', 'base_link')
 
     rate = rospy.Rate(rateHz)
@@ -57,6 +67,7 @@ def node():
     # Subscribers
     rospy.Subscriber(map_topic, OccupancyGrid, mapCallBack)
     rospy.Subscriber(global_costmap_topic, OccupancyGrid, globalMap)
+    rospy.Subscriber(local_costmap_topic, OccupancyGrid, localMap)
 
     # Wait if map is not received yet
     while (len(mapData.data) < 1):
@@ -180,7 +191,9 @@ def node():
                 transformedPoint = tfLisn.transformPoint(globalmap.header.frame_id, temppoint)
                 x = array([transformedPoint.point.x, transformedPoint.point.y])
                 cond = gridValue(globalmap, x) > threshold
-                if cond:
+                if cond or obstacleGain(mapData, [centroids[z][0], centroids[z][1]], door_length / 2) > ((wall_thickness / 2) ** 2)\
+                        or obstacleGain(mapData, [centroids[z][0], centroids[z][1]], door_length / 2) > ((wall_thickness / 2) ** 2)\
+                        or informationGain(mapData, [centroids[z][0], centroids[z][1]], door_length / 2) < 0.1:
                     centroids = delete(centroids, (z), axis=0)
                     z = z-1
                 z += 1

@@ -1,4 +1,4 @@
-image: my_map.pgm
+image: /home/windrist/Workspace/DoAn_ws/src/turtlebot3_aslam/maps/gmapping_house.pgm
 resolution: 0.050000
 origin: [-10.000000, -10.000000, 0.000000]
 negate: 0

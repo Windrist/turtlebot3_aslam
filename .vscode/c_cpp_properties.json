@@ -6,7 +6,7 @@
                 "/opt/ros/noetic/include/**",
                 "/usr/include/**",
                 "${workspaceFolder}/include",
-                "~/Workspace/DoAn_ws/devel_isolated/**"
+                "~/Workspace/DoAn_ws/devel/**"
             ],
             "compilerPath": "/usr/bin/gcc",
             "cStandard": "gnu17",
