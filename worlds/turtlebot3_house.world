@@ -29,10 +29,6 @@
             </plane>
           </geometry>
           <surface>
-            <contact>
-              <collide_bitmask>65535</collide_bitmask>
-              <ode/>
-            </contact>
             <friction>
               <ode>
                 <mu>100</mu>
@@ -42,6 +38,9 @@
                 <ode/>
               </torsional>
             </friction>
+            <contact>
+              <ode/>
+            </contact>
             <bounce/>
           </surface>
           <max_contacts>10</max_contacts>
@@ -6296,7 +6295,7 @@
     </scene>
     <gui fullscreen='0'>
       <camera name='user_camera'>
-        <pose>0 0 17 3.14159 1.57079 3.14159</pose>
+        <pose>-0.544483 -0.440661 6.44836 0 1.1538 1.1176</pose>
         <view_controller>orbit</view_controller>
         <projection_type>perspective</projection_type>
       </camera>
@@ -6312,33 +6311,16 @@
       <elevation>0</elevation>
       <heading_deg>0</heading_deg>
     </spherical_coordinates>
-    <model name='first_2015_trash_can_1'>
-      <link name='link'>
-        <inertial>
-          <pose>0 0 0.3683 0 -0 0</pose>
-          <mass>4.83076</mass>
-          <inertia>
-            <ixx>0.281534</ixx>
-            <ixy>0</ixy>
-            <ixz>0</ixz>
-            <iyy>0.281534</iyy>
-            <iyz>0</iyz>
-            <izz>0.126223</izz>
-          </inertia>
-        </inertial>
-        <visual name='visual'>
+    <model name='Door_Wall_Turtlebot_3_House'>
+      <pose>0.781 -0.125 0 0 -0 0</pose>
+      <link name='Wall_0'>
+        <collision name='Wall_0_Collision'>
           <geometry>
-            <mesh>
-              <uri>model://first_2015_trash_can/meshes/trash_can.dae</uri>
-            </mesh>
+            <box>
+              <size>0.9 0.15 2.5</size>
+            </box>
           </geometry>
-        </visual>
-        <collision name='collision'>
-          <geometry>
-            <mesh>
-              <uri>model://first_2015_trash_can/meshes/trash_can.dae</uri>
-            </mesh>
-          </geometry>
+          <pose>0 0 1.25 0 -0 0</pose>
           <max_contacts>10</max_contacts>
           <surface>
             <contact>
@@ -6353,25 +6335,44 @@
             </friction>
           </surface>
         </collision>
+        <visual name='Wall_0_Visual'>
+          <pose>0 0 1.25 0 -0 0</pose>
+          <geometry>
+            <box>
+              <size>0.9 0.15 2.5</size>
+            </box>
+          </geometry>
+          <material>
+            <script>
+              <uri>file://media/materials/scripts/gazebo.material</uri>
+              <name>Gazebo/Wood</name>
+            </script>
+            <ambient>1 1 1 1</ambient>
+          </material>
+          <meta>
+            <layer>0</layer>
+          </meta>
+        </visual>
+        <pose>0.331 -0.05 0 0 -0 0</pose>
         <self_collide>0</self_collide>
         <enable_wind>0</enable_wind>
         <kinematic>0</kinematic>
       </link>
-      <pose>1.19218 -0.204729 0 0 -0 0</pose>
+      <static>1</static>
     </model>
     <state world_name='default'>
-      <sim_time>28 35000000</sim_time>
-      <real_time>28 146152995</real_time>
-      <wall_time>1650304531 116948945</wall_time>
-      <iterations>28035</iterations>
-      <model name='first_2015_trash_can_1'>
-        <pose>1.19219 -0.204733 -2e-06 9e-06 -9e-06 -5.7e-05</pose>
+      <sim_time>36 925000000</sim_time>
+      <real_time>37 56967001</real_time>
+      <wall_time>1650355688 597466131</wall_time>
+      <iterations>36925</iterations>
+      <model name='Door_Wall_Turtlebot_3_House'>
+        <pose>0.781 -0.125 0 0 -0 0</pose>
         <scale>1 1 1</scale>
-        <link name='link'>
-          <pose>1.19219 -0.204733 -2e-06 9e-06 -9e-06 -5.7e-05</pose>
+        <link name='Wall_0'>
+          <pose>1.112 -0.175 0 0 -0 0</pose>
           <velocity>0 0 0 0 -0 0</velocity>
-          <acceleration>2.44076 2.08249 -2.19958 0.628689 0.344102 -9e-06</acceleration>
-          <wrench>11.7907 10.06 -10.6256 0 -0 0</wrench>
+          <acceleration>0 0 0 0 -0 0</acceleration>
+          <wrench>0 0 0 0 -0 0</wrench>
         </link>
       </model>
       <model name='ground_plane'>

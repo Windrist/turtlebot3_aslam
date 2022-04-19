@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 
 # --------Include modules---------------
+from cmath import inf
 from copy import copy
+from distutils.log import info
 import rospy
 from visualization_msgs.msg import Marker
 from geometry_msgs.msg import Point
@@ -53,6 +55,8 @@ def node():
     map_topic = rospy.get_param('~map_topic', 'map')
     door_length = rospy.get_param('~door_length', 0.5)
     wall_thickness = rospy.get_param('~wall_thickness', 0.2)
+    robot_length = rospy.get_param('~robot_length', 0.1)
+    info_radius = rospy.get_param('~info_radius', 3.0)  # This can be smaller than the laser scanner range, >> smaller >> less computation time >> too small is not good, info gain won't be accurate
     threshold = rospy.get_param('~costmap_clearing_threshold', 30)
     goals_topic = rospy.get_param('~goals_topic', '/detected_points')
     rateHz = rospy.get_param('~rate', 100)
@@ -191,9 +195,9 @@ def node():
                 transformedPoint = tfLisn.transformPoint(globalmap.header.frame_id, temppoint)
                 x = array([transformedPoint.point.x, transformedPoint.point.y])
                 cond = gridValue(globalmap, x) > threshold
-                if cond or obstacleGain(mapData, [centroids[z][0], centroids[z][1]], door_length / 2) > ((wall_thickness / 2) ** 2)\
-                        or obstacleGain(mapData, [centroids[z][0], centroids[z][1]], door_length / 2) > ((wall_thickness / 2) ** 2)\
-                        or informationGain(mapData, [centroids[z][0], centroids[z][1]], door_length / 2) < 0.1:
+                if cond or obstacleGain(mapData, [centroids[z][0], centroids[z][1]], door_length / 2, 70) > ((wall_thickness / 2) ** 2)\
+                        or obstacleGain(globalmap, [centroids[z][0], centroids[z][1]], door_length / 2, threshold) > ((wall_thickness / 2) ** 2)\
+                        or informationGain(mapData, [centroids[z][0], centroids[z][1]], info_radius) < 0.1:
                     centroids = delete(centroids, (z), axis=0)
                     z = z-1
                 z += 1

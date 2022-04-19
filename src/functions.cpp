@@ -95,7 +95,7 @@ char obstacleFree(std::vector<float> xnear, std::vector<float> &xnew, nav_msgs::
     for (int c=0; c<stepz; c++) {
         xi = Steer(xi, xnew, rez);
 
-        if (gridValue(mapsub, xi) == 100)
+        if (gridValue(mapsub, xi) >= 90)
             obs = 1;
         
         if (gridValue(mapsub, xi) == -1) {

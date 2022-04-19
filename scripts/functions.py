@@ -109,7 +109,7 @@ def informationGain(mapData, point, r):
 # ________________________________________________________________________________
 
 
-def obstacleGain(mapData, point, r):
+def obstacleGain(mapData, point, r, threshold):
     obstacleGain = 0
     index = index_of_point(mapData, point)
     r_region = int(r / mapData.info.resolution)
@@ -119,7 +119,7 @@ def obstacleGain(mapData, point, r):
         end = start + 2 * r_region
         for i in range(start, end+1):
             if (i >= 0 and i < len(mapData.data)):
-                if mapData.data[i] > 70:
+                if mapData.data[i] >= threshold:
                     obstacleGain += 1
     return (obstacleGain * (mapData.info.resolution ** 2)) / (2 * math.pi * r ** 2)
 # ________________________________________________________________________________

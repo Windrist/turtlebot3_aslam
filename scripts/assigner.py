@@ -2,6 +2,7 @@
 
 # --------Include modules---------------
 from copy import copy
+from tkinter import W
 import rospy
 import math
 from nav_msgs.msg import OccupancyGrid
@@ -89,18 +90,17 @@ def node():
             centroid_record.append(centroids[ip])
 
         rospy.loginfo("Number of frontiers: %d", len(gain_record))
-        rospy.loginfo("Information Gain: " + str(gain_record))
-        rospy.loginfo("Revenue record: " + str(revenue_record))
-        rospy.loginfo("Centroid record: " + str(centroid_record))
+        rospy.logdebug("Information Gain: " + str(gain_record))
+        rospy.logdebug("Revenue record: " + str(revenue_record))
+        rospy.logdebug("Centroid record: " + str(centroid_record))
 
         # -------------------------------------------------------------------------
         if len(revenue_record) > 0:
             winner_id = revenue_record.index(max(revenue_record))
-            # if revenue_record[winner_id] >= prevRevenue:
+            # if revenue_record[winner_id] - prevRevenue:
             rospy.loginfo("Assigning robot " + turtle.name + "to frontier " + str(centroid_record[winner_id]))
-            # rospy.loginfo("Frontier Number: %d", winner_id)
-            # rospy.loginfo("Revenue: " + str(revenue_record[winner_id]))
-            # rospy.loginfo("Information Gain: " + str(gain_record[winner_id]))
+            rospy.loginfo("Revenue: " + str(revenue_record[winner_id]))
+            rospy.loginfo("Information Gain: " + str(gain_record[winner_id]))
             turtle.sendGoal(centroid_record[winner_id])
             prevRevenue = revenue_record[winner_id]
             rospy.sleep(delay_after_assignement)
