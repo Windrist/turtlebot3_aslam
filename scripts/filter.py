@@ -194,10 +194,10 @@ def node():
                 
                 transformedPoint = tfLisn.transformPoint(globalmap.header.frame_id, temppoint)
                 x = array([transformedPoint.point.x, transformedPoint.point.y])
-                cond = gridValue(globalmap, x) > threshold
-                if cond or obstacleGain(mapData, [centroids[z][0], centroids[z][1]], door_length / 2, 70) > ((wall_thickness / 2) ** 2)\
-                        or obstacleGain(globalmap, [centroids[z][0], centroids[z][1]], door_length / 2, threshold) > ((wall_thickness / 2) ** 2)\
-                        or informationGain(mapData, [centroids[z][0], centroids[z][1]], info_radius) < 0.1:
+                cond = gridValue(mapData, x) > threshold
+                obsCond = obstacleGain(mapData, [centroids[z][0], centroids[z][1]], door_length / 2, threshold) > ((wall_thickness / 2) ** 2)
+                infCond = informationGain(mapData, [centroids[z][0], centroids[z][1]], info_radius) == 0.0
+                if cond or obsCond or infCond:
                     centroids = delete(centroids, (z), axis=0)
                     z = z-1
                 z += 1
