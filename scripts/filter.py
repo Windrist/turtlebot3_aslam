@@ -11,7 +11,7 @@ from nav_msgs.msg import OccupancyGrid
 from geometry_msgs.msg import PointStamped
 import tf
 from numpy import array, vstack, delete
-from functions import gridValue, informationGain, obstacleGain
+from functions import gridValue, obstacleProbability
 from sklearn.cluster import MeanShift
 from turtlebot3_aslam.msg import PointArray
 
@@ -194,10 +194,11 @@ def node():
                 
                 transformedPoint = tfLisn.transformPoint(globalmap.header.frame_id, temppoint)
                 x = array([transformedPoint.point.x, transformedPoint.point.y])
-                cond = gridValue(mapData, x) > threshold
-                obsCond = obstacleGain(mapData, [centroids[z][0], centroids[z][1]], door_length / 2, threshold) > ((wall_thickness / 2) ** 2)
-                infCond = informationGain(mapData, [centroids[z][0], centroids[z][1]], info_radius) == 0.0
-                if cond or obsCond or infCond:
+                cond = gridValue(globalmap, x) > threshold
+                obsCond = obstacleProbability(mapData, [centroids[z][0], centroids[z][1]], door_length / 2) > 0.2
+                obsCostCond = obstacleProbability(globalmap, [centroids[z][0], centroids[z][1]], door_length / 2) > 0.2
+                print(obstacleProbability(mapData, [centroids[z][0], centroids[z][1]], door_length / 2))
+                if cond or obsCostCond or obsCond:
                     centroids = delete(centroids, (z), axis=0)
                     z = z-1
                 z += 1

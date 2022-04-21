@@ -27,7 +27,7 @@
   <param name="wall_thickness" value="0.2"/>
   <param name="robot_length" value="0.1"/>
   <param name="info_radius" value="1.0"/>
-  <param name="costmap_clearing_threshold" value="90"/>
+  <param name="costmap_clearing_threshold" value="70"/>
   <param name="global_costmap_topic" value="/move_base/global_costmap/costmap"/>
   <param name="local_costmap_topic" value="/move_base/local_costmap/costmap"/>
   <param name="goals_topic" value="/detected_points"/>
@@ -40,7 +40,7 @@
   <param name="info_radius" value="1"/> 
   <param name="hysteresis_gain" value="2.0"/> 
   <param name="frontiers_topic" value="/filtered_points"/> 
-  <param name="delay_after_assignement" value="1.0"/>
+  <param name="delay_after_assignement" value="5.0"/>
   <param name="rate" value="100"/>
   </node>
   

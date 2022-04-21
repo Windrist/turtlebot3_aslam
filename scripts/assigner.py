@@ -40,6 +40,8 @@ def node():
     hysteresis_gain = rospy.get_param('~hysteresis_gain',
                                       2.0)  # Bigger than 1 (biase robot to continue exploring current region
     sigma = rospy.get_param('~sigma', 0.5)  # This is the standard deviation of the gaussian distribution
+    info_multiplier = rospy.get_param('~info_multiplier', 3.0)
+    hysteresis_radius = rospy.get_param('~hysteresis_radius', 3.0)
     frontiers_topic = rospy.get_param('~frontiers_topic', '/filtered_points')
     delay_after_assignement = rospy.get_param('~delay_after_assignement', 0.5)
     rateHz = rospy.get_param('~rate', 100)
@@ -83,11 +85,14 @@ def node():
         for ip in range(0, len(centroids)):
             cost = norm(turtle.getPosition() - centroids[ip])
             information_gain = infoGain[ip]
-
-            revenue = 1 / sigma * math.sqrt(2 * math.pi) * math.exp(-0.5 * ((cost - info_radius / 2) / sigma) ** 2)
-            gain_record.append(float(information_gain))
-            revenue_record.append(revenue)
-            centroid_record.append(centroids[ip])
+            
+            if information_gain > 0.2:
+                if norm(turtle.getPosition()-centroids[ip]) <= hysteresis_radius:
+                    information_gain *= hysteresis_gain
+                revenue = information_gain * info_multiplier - cost
+                gain_record.append(float(information_gain))
+                revenue_record.append(revenue)
+                centroid_record.append(centroids[ip])
 
         rospy.loginfo("Number of frontiers: %d", len(gain_record))
         rospy.logdebug("Information Gain: " + str(gain_record))

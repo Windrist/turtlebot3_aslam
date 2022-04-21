@@ -1,12 +1,13 @@
 import rospy
 import tf
 import math
-from numpy import array
+import random
+from numpy import array, identity, floor, transpose
+from numpy.linalg import inv, det, norm
 import actionlib
 from move_base_msgs.msg import MoveBaseAction, MoveBaseGoal
 from nav_msgs.srv import GetPlan
 from geometry_msgs.msg import PoseStamped
-from numpy import floor
 
 
 class robot:
@@ -89,7 +90,7 @@ def index_of_point(mapData, Xp):
 def point_of_index(mapData, i):
     y = mapData.info.origin.position.y + i / mapData.info.width * mapData.info.resolution
     x = mapData.info.origin.position.x + i % mapData.info.width * mapData.info.resolution
-    return array([x, y])
+    return array([[x], [y]])
 # ________________________________________________________________________________
 
 
@@ -109,19 +110,26 @@ def informationGain(mapData, point, r):
 # ________________________________________________________________________________
 
 
-def obstacleGain(mapData, point, r, threshold):
-    obstacleGain = 0
+def obstacleProbability(mapData, point, r):
+    obsProb = 0
+    I = identity(2)
+    safe_volume = array([1, 1])
+    point = array([[point[0]], [point[1]]])
     index = index_of_point(mapData, point)
     r_region = int(r / mapData.info.resolution)
     init_index = index - r_region  * (mapData.info.width + 1)
-    for n in range(0, 2*r_region+1):
-        start = n * mapData.info.width + init_index
-        end = start + 2 * r_region
-        for i in range(start, end+1):
-            if (i >= 0 and i < len(mapData.data)):
-                if mapData.data[i] >= threshold:
-                    obstacleGain += 1
-    return (obstacleGain * (mapData.info.resolution ** 2)) / (2 * math.pi * r ** 2)
+    end_index = index + r_region * (mapData.info.width + 1)
+    
+    for _ in range(int(r_region ** 2 / 2)):
+        sample_index = random.randint(init_index, end_index)
+        if sample_index >= 0 and sample_index < len(mapData.data):
+            sample_point = point_of_index(mapData, sample_index)
+            sigma_obs = 1 if mapData.data[sample_index] == -1 else (100 - mapData.data[sample_index]) / 100
+            sigma = (sigma_obs + r) * I
+            # prob = safe_volume * math.exp(-0.5 * transpose(sample_point - point) * inv(sigma) * (sample_point - point)) / ((2 * math.pi * sigma) ** 0.5)
+            prob = transpose(sample_point - point), inv(sigma)
+            obsProb += prob
+    return obsProb / int(r_region ** 2 / 2)
 # ________________________________________________________________________________
 
 
