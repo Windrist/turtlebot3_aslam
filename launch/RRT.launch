@@ -40,7 +40,7 @@
   <param name="info_radius" value="1"/> 
   <param name="hysteresis_gain" value="2.0"/> 
   <param name="frontiers_topic" value="/filtered_points"/> 
-  <param name="delay_after_assignement" value="5.0"/>
+  <param name="delay_after_assignement" value="0.5"/>
   <param name="rate" value="100"/>
   </node>
   

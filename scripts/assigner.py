@@ -8,7 +8,7 @@ import math
 from nav_msgs.msg import OccupancyGrid
 from turtlebot3_aslam.msg import PointArray
 from numpy import array
-from functions import robot, informationGain
+from functions import robot, informationProbability
 from numpy.linalg import norm
 
 # Subscribers's Callbacks ------------------------------
@@ -74,7 +74,7 @@ def node():
         # Get information gain for each frontier point
         infoGain = []
         for ip in range(0, len(centroids)):
-            infoGain.append(informationGain(mapData, [centroids[ip][0], centroids[ip][1]], info_radius))
+            infoGain.append(informationProbability(mapData, turtle.getPosition(), [centroids[ip][0], centroids[ip][1]], info_radius))
         # -------------------------------------------------------------------------
         # Calculate the Information Gain of each frontier point
 
@@ -86,13 +86,17 @@ def node():
             cost = norm(turtle.getPosition() - centroids[ip])
             information_gain = infoGain[ip]
             
-            if information_gain > 0.2:
-                if norm(turtle.getPosition()-centroids[ip]) <= hysteresis_radius:
-                    information_gain *= hysteresis_gain
-                revenue = information_gain * info_multiplier - cost
-                gain_record.append(float(information_gain))
-                revenue_record.append(revenue)
-                centroid_record.append(centroids[ip])
+            # if information_gain > 0.2:
+            #     if norm(turtle.getPosition()-centroids[ip]) <= hysteresis_radius:
+            #         information_gain *= hysteresis_gain
+            #     revenue = information_gain * info_multiplier - cost
+            #     gain_record.append(float(information_gain))
+            #     revenue_record.append(revenue)
+            #     centroid_record.append(centroids[ip])
+            
+            gain_record.append(float(information_gain))
+            revenue_record.append(information_gain)
+            centroid_record.append(centroids[ip])
 
         rospy.loginfo("Number of frontiers: %d", len(gain_record))
         rospy.logdebug("Information Gain: " + str(gain_record))

@@ -195,9 +195,9 @@ def node():
                 transformedPoint = tfLisn.transformPoint(globalmap.header.frame_id, temppoint)
                 x = array([transformedPoint.point.x, transformedPoint.point.y])
                 cond = gridValue(globalmap, x) > threshold
-                obsCond = obstacleProbability(mapData, [centroids[z][0], centroids[z][1]], door_length / 2) > 0.2
-                obsCostCond = obstacleProbability(globalmap, [centroids[z][0], centroids[z][1]], door_length / 2) > 0.2
-                print(obstacleProbability(mapData, [centroids[z][0], centroids[z][1]], door_length / 2))
+                obsCond = obstacleProbability(mapData, [centroids[z][0], centroids[z][1]], door_length / 2) > 0.5
+                obsCostCond = obstacleProbability(globalmap, [centroids[z][0], centroids[z][1]], door_length / 2) > 0.5
+                # print(obstacleProbability(mapData, [centroids[z][0], centroids[z][1]], door_length / 2))
                 if cond or obsCostCond or obsCond:
                     centroids = delete(centroids, (z), axis=0)
                     z = z-1
