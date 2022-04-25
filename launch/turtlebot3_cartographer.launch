@@ -14,6 +14,7 @@
 <launch>
   <!-- Arguments -->
   <arg name="model" default="$(env TURTLEBOT3_MODEL)" doc="model type [burger, waffle, waffle_pi]"/>
+  <arg name="move_forward_only" default="False"/>
   <arg name="configuration_basename" default="turtlebot3_lds_2d.lua"/>
 
   <!-- cartographer_node -->
@@ -35,4 +36,9 @@
     <remap from="imu_in" to="/imu" />
     <remap from="imu_out" to="/flat_imu" />
   </node>
+
+  <include file="$(find turtlebot3_navigation)/launch/move_base.launch">
+    <arg name="model" value="$(arg model)"/>
+    <arg name="move_forward_only" value="$(arg move_forward_only)"/>
+  </include>
 </launch>

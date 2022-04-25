@@ -95,49 +95,35 @@ def point_of_index(mapData, i):
 # ________________________________________________________________________________
 
 
-def informationProbability(mapData, robot_point, point, r):
-    infoProb = 0
-    I = identity(2)
+def informationGain(mapData, point, r):
+    infoGain = 0.0
     index = index_of_point(mapData, point)
     r_region = int(r / mapData.info.resolution)
     init_index = index - r_region  * (mapData.info.width + 1)
     end_index = index + r_region * (mapData.info.width + 1)
     
-    for _ in range(int(r_region ** 2 / 2)):
-        sample_index = random.randint(init_index, end_index)
+    for sample_index in range(init_index, end_index + 1):
         if sample_index >= 0 and sample_index < len(mapData.data):
-            sample_point = point_of_index(mapData, sample_index)
-            if mapData.data[sample_index] == -1:
-                infoGain = 0
-            elif mapData.data[sample_index] == 0:
-                infoGain = 1
-            else:
-                infoGain = mapData.data[sample_index] / 100
-            sigma = (infoGain + r) * I
-            prob = math.exp(-0.5 * multi_dot([(robot_point - point).T, inv(sigma), (sample_point - point)])) / math.sqrt(multi_dot([2 * math.pi] + [det(sigma)]))
-            infoProb += 1 - prob
-    print(infoProb)
-    return 1 - infoProb / int(r_region ** 2 / 2)
+            if (mapData.data[sample_index] == -1 and norm(array(point) - point_of_index(mapData, sample_index)) <= r):
+                infoGain += 1
+    return infoGain * (mapData.info.resolution ** 2)
 # ________________________________________________________________________________
 
 
-def obstacleProbability(mapData, point, r):
+def obstacleProbability(mapData, point, r, threshold):
     obsProb = 0
-    I = identity(2)
     index = index_of_point(mapData, point)
     r_region = int(r / mapData.info.resolution)
     init_index = index - r_region  * (mapData.info.width + 1)
     end_index = index + r_region * (mapData.info.width + 1)
+    sigma = 100 - threshold
     
-    for _ in range(int(r_region ** 2 / 2)):
-        sample_index = random.randint(init_index, end_index)
+    for sample_index in range(init_index, end_index + 1):
         if sample_index >= 0 and sample_index < len(mapData.data):
-            sample_point = point_of_index(mapData, sample_index)
-            obsGain = 1 if mapData.data[sample_index] == -1 else (100 - mapData.data[sample_index]) / 100
-            sigma = (obsGain + r) * I
-            prob = math.exp(-0.5 * multi_dot([(sample_point - point).T, inv(sigma), (sample_point - point)]))
-            obsProb += 1 - prob
-    return 1 - obsProb / int(r_region ** 2 / 2)
+            obsGain = mapData.data[sample_index]
+            prob = math.exp(-0.5 * (((obsGain - 100) / sigma) ** 2)) / math.sqrt(2 * math.pi)
+            obsProb += prob
+    return obsProb / (2 * r_region * (mapData.info.width + 1))
 # ________________________________________________________________________________
 
 

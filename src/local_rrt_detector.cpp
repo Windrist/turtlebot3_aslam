@@ -10,7 +10,6 @@
 #include "std_msgs/String.h"
 #include "nav_msgs/OccupancyGrid.h"
 #include "geometry_msgs/PointStamped.h"
-#include "turtlebot3_aslam/PointArray.h"
 #include "move_base_msgs/MoveBaseActionGoal.h"
 #include "std_msgs/Header.h"
 #include "nav_msgs/MapMetaData.h"
@@ -53,14 +52,13 @@ int main(int argc, char **argv) {
 	ros::NodeHandle nh;
 	
 	// Fetching all parameters
-	float eta, lambda;
+	float eta;
 	std::string map_topic, costmap_topic, base_frame_topic;
 	
 	std::string ns;
 	ns = ros::this_node::getName();
 
 	ros::param::param<float>(ns + "/eta", eta, 0.5);
-	ros::param::param<float>(ns + "/lambda", lambda, 3.0);
 	ros::param::param<std::string>(ns + "/map_topic", map_topic, "/map");
 	ros::param::param<std::string>(ns + "/costmap_topic", costmap_topic, "/move_base/local_costmap/costmap");
 	ros::param::param<std::string>(ns + "/robot_frame", base_frame_topic, "/base_link"); 
@@ -142,7 +140,7 @@ int main(int argc, char **argv) {
 	xnew.push_back(transform.getOrigin().y());
 	V.push_back(xnew);
 
-	float xr, yr, gain = 0.0, prevGain = 0.0;
+	float xr, yr;
 	std::vector<float> x_rand, x_nearest, x_new, x_current;
 	geometry_msgs::PointStamped exploration_goal;
 	

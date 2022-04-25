@@ -10,7 +10,6 @@
 #include "std_msgs/String.h"
 #include "nav_msgs/OccupancyGrid.h"
 #include "geometry_msgs/Point.h"
-#include "turtlebot3_aslam/PointArray.h"
 #include "move_base_msgs/MoveBaseActionGoal.h"
 #include "std_msgs/Header.h"
 #include "nav_msgs/MapMetaData.h"
@@ -53,16 +52,15 @@ int main(int argc, char **argv) {
 	ros::NodeHandle nh;
 	
 	// Fetching all parameters
-	float eta, lambda;
+	float eta;
 	std::string map_topic, costmap_topic, base_frame_topic;
 	
 	std::string ns;
 	ns = ros::this_node::getName();
 
-	ros::param::param<float>(ns + "/eta", eta, 0.5);
-	ros::param::param<float>(ns + "/lambda", lambda, 3.0);
+	ros::param::param<float>(ns + "/eta", eta, 1.0);
 	ros::param::param<std::string>(ns + "/map_topic", map_topic, "/map");
-	ros::param::param<std::string>(ns + "/costmap_topic", costmap_topic, "/move_base/global_costmap/costmap"); 
+	ros::param::param<std::string>(ns + "/costmap_topic", costmap_topic, "/move_base/global_costmap/costmap");
 	ros::param::param<std::string>(ns + "/robot_frame", base_frame_topic, "/base_link"); 
 
 	//---------------------------------------------------------------
@@ -142,13 +140,12 @@ int main(int argc, char **argv) {
 	xnew.push_back(transform.getOrigin().y());
 	V.push_back(xnew);
 
-	float xr, yr, gain = 0.0, prevGain = 0.0;
+	float xr, yr;
 	std::vector<float> x_rand, x_nearest, x_new, x_current;
 	geometry_msgs::PointStamped exploration_goal;
 
 	// Main Loop
 	while (ros::ok()) {
-
 		listener.lookupTransform(map_topic, base_frame_topic, ros::Time(0), transform);
 		x_current.push_back(transform.getOrigin().x());
 		x_current.push_back(transform.getOrigin().y());
@@ -172,7 +169,7 @@ int main(int argc, char **argv) {
 			// 1: Free
 			// -1: Unnkown (Frontier Region)
 			// 0: Obstacle
-		// 
+		//
 		char checking = obstacleFree(x_nearest, x_new, mapData);
 		if (checking == -1) {
 			exploration_goal.header.stamp = ros::Time(0);
@@ -180,7 +177,7 @@ int main(int argc, char **argv) {
 			exploration_goal.point.x = x_new[0];
 			exploration_goal.point.y = x_new[1];
 			exploration_goal.point.z = 0.0;
-			
+
 			points.points.push_back(exploration_goal.point);
 			pub.publish(points);
 			targetspub.publish(exploration_goal);
@@ -203,11 +200,11 @@ int main(int argc, char **argv) {
 			init_map_x = xdim * resolution;
 			init_map_y = ydim * resolution;
 		}
-
-		pub.publish(line);  
-
+		pub.publish(line);
+		
 		ros::spinOnce();
 		rate.sleep();
 	}
+
 	return 0;
 }
