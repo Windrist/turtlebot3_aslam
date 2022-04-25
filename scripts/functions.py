@@ -110,20 +110,46 @@ def informationGain(mapData, point, r):
 # ________________________________________________________________________________
 
 
-def obstacleProbability(mapData, point, r, threshold):
+def informationProbability(mapData, point, r):
+    infoProb = 0
+    index = index_of_point(mapData, point)
+    r_region = int(r / mapData.info.resolution)
+    init_index = index - r_region  * (mapData.info.width + 1)
+    end_index = index + r_region * (mapData.info.width + 1)
+    sigma = 100
+    
+    for _ in range(int(r_region ** 2 / 2)):
+        sample_index = random.randint(init_index, end_index)
+        obsGain = (100 - mapData.data[sample_index]) if mapData.data[sample_index] != 0 else 0
+        prob = math.exp(-0.5 * (((obsGain - 100) / sigma) ** 2)) / math.sqrt(2 * math.pi)
+        infoProb += prob
+    # print(infoProb / int(r_region ** 2 / 2))
+    if infoProb / int(r_region ** 2 / 2) >= 0.35:
+        return True
+    return False
+# ________________________________________________________________________________
+
+
+def obstacleProbability(mapData, point, r):
     obsProb = 0
     index = index_of_point(mapData, point)
     r_region = int(r / mapData.info.resolution)
     init_index = index - r_region  * (mapData.info.width + 1)
     end_index = index + r_region * (mapData.info.width + 1)
-    sigma = 100 - threshold
+    sigma = 50
     
-    for sample_index in range(init_index, end_index + 1):
-        if sample_index >= 0 and sample_index < len(mapData.data):
-            obsGain = mapData.data[sample_index]
+    for _ in range(init_index, end_index + 1):
+        sample_index = random.randint(init_index, end_index)
+        obsGain = mapData.data[sample_index] if mapData.data[sample_index] != -1 else -100
+        if obsGain >= 50:
             prob = math.exp(-0.5 * (((obsGain - 100) / sigma) ** 2)) / math.sqrt(2 * math.pi)
-            obsProb += prob
-    return obsProb / (2 * r_region * (mapData.info.width + 1))
+        else:
+            prob = math.exp(-0.5 * ((obsGain / sigma) ** 2)) / math.sqrt(2 * math.pi)
+        obsProb += prob
+    print(obsProb / (end_index - init_index + 1))
+    if obsProb / (end_index - init_index + 1) >= 0.17:
+        return True
+    return False
 # ________________________________________________________________________________
 
 
