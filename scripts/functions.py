@@ -131,23 +131,29 @@ def informationProbability(mapData, point, r):
 
 
 def obstacleProbability(mapData, point, r):
-    obsProb = 0
     index = index_of_point(mapData, point)
     r_region = int(r / mapData.info.resolution)
     init_index = index - r_region  * (mapData.info.width + 1)
-    end_index = index + r_region * (mapData.info.width + 1)
     sigma = 50
     
-    for _ in range(init_index, end_index + 1):
-        sample_index = random.randint(init_index, end_index)
-        obsGain = mapData.data[sample_index] if mapData.data[sample_index] != -1 else -100
-        if obsGain >= 50:
-            prob = math.exp(-0.5 * (((obsGain - 100) / sigma) ** 2)) / math.sqrt(2 * math.pi)
-        else:
-            prob = math.exp(-0.5 * ((obsGain / sigma) ** 2)) / math.sqrt(2 * math.pi)
-        obsProb += prob
-    print(obsProb / (end_index - init_index + 1))
-    if obsProb / (end_index - init_index + 1) >= 0.17:
+    obsProb = 0
+    for n in range (0, 2 * r_region + 1):
+        start = n * mapData.info.width + init_index
+        end = start + 2 * r_region
+        for sample_index in range(start, end+1):
+            if mapData.data[sample_index] >= 50:
+                obsGain = mapData.data[sample_index] - 100
+                prob = math.exp(-0.5 * ((obsGain / sigma) ** 2)) / math.sqrt(2 * math.pi)
+            elif mapData.data[sample_index] == -1:
+                obsGain = sigma
+                prob = 0
+            else:
+                obsGain = mapData.data[sample_index]
+                obsGain = 0
+                prob = 0
+            obsProb += prob
+    print(obsProb / int(r_region ** 2 / 2))
+    if obsProb / int(r_region ** 2 / 2) >= 0.17:
         return True
     return False
 # ________________________________________________________________________________
