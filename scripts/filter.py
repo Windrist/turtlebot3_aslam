@@ -56,7 +56,7 @@ def node():
     door_length = rospy.get_param('~door_length', 0.5)
     wall_thickness = rospy.get_param('~wall_thickness', 0.2)
     robot_length = rospy.get_param('~robot_length', 0.1)
-    info_radius = rospy.get_param('~info_radius', 3.0)  # This can be smaller than the laser scanner range, >> smaller >> less computation time >> too small is not good, info gain won't be accurate
+    info_radius = rospy.get_param('~info_radius', 1.0)  # This can be smaller than the laser scanner range, >> smaller >> less computation time >> too small is not good, info gain won't be accurate
     threshold = rospy.get_param('~costmap_clearing_threshold', 30)
     goals_topic = rospy.get_param('~goals_topic', '/detected_points')
     rateHz = rospy.get_param('~rate', 100)
@@ -94,6 +94,7 @@ def node():
                      callback_args=[tfLisn, global_frame[1:]])
     pub = rospy.Publisher('frontiers', Marker, queue_size=10)
     pub2 = rospy.Publisher('centroids', Marker, queue_size=10)
+    pub3 = rospy.Publisher('filtered_centroids', Marker, queue_size=10)
     filterpub = rospy.Publisher('filtered_points', PointArray, queue_size=10)
 
     rospy.loginfo("the map and global costmaps are received")
@@ -104,6 +105,7 @@ def node():
 
     points = Marker()
     points_clust = Marker()
+    points_filter = Marker()
     
     # Set the frame ID and timestamp.  See the TF tutorials for information on these.
     points.header.frame_id = mapData.header.frame_id
@@ -135,6 +137,7 @@ def node():
 
     pp = []
 
+    # Set the frame ID and timestamp.  See the TF tutorials for information on these.
     points_clust.header.frame_id = mapData.header.frame_id
     points_clust.header.stamp = rospy.Time.now()
 
@@ -156,6 +159,30 @@ def node():
 
     points_clust.color.a = 1
     points_clust.lifetime = rospy.Duration()
+    
+    # Set the frame ID and timestamp.  See the TF tutorials for information on these.
+    points_filter.header.frame_id = mapData.header.frame_id
+    points_filter.header.stamp = rospy.Time.now()
+
+    points_filter.ns = "markers4"
+    points_filter.id = 5
+
+    points_filter.type = Marker.POINTS
+
+    # Set the marker action for filter centroids.  Options are ADD, DELETE, and new in ROS Indigo: 3 (DELETEALL)
+    points_filter.action = Marker.ADD
+
+    points_filter.pose.orientation.w = 1.0
+
+    points_filter.scale.x = 0.2
+    points_filter.scale.y = 0.2
+
+    points_filter.color.r = 0.0/255.0
+    points_filter.color.g = 0.0/255.0
+    points_filter.color.b = 255.0/255.0
+
+    points_filter.color.a = 1
+    points_filter.lifetime = rospy.Duration()
 
     temppoint = PointStamped()
     temppoint.header.frame_id = mapData.header.frame_id
@@ -185,6 +212,7 @@ def node():
         
         # -------------------------------------------------------------------------
         # Clearing old frontiers
+        obsfrontiers = []
         if len(centroids) > 1:
             z = 0
             while z < len(centroids):
@@ -195,11 +223,20 @@ def node():
                 transformedPoint = tfLisn.transformPoint(globalmap.header.frame_id, temppoint)
                 x = array([transformedPoint.point.x, transformedPoint.point.y])
                 cond = gridValue(globalmap, x) > threshold
-                obsCond = obstacleProbability(mapData, [centroids[z][0], centroids[z][1]], door_length / 2)
-                # obsCostCond = obstacleProbability(globalmap, [centroids[z][0], centroids[z][1]], door_length / 2, threshold)
-                # infoCond = informationProbability(mapData, [centroids[z][0], centroids[z][1]], info_radius)
-                # if cond or obsCond or obsCostCond or infoCond:
-                if obsCond:
+                obsCond, prob = obstacleProbability(mapData, [centroids[z][0], centroids[z][1]], door_length / 2)
+                if cond or obsCond:
+                    centroids = delete(centroids, (z), axis=0)
+                    z = z-1
+                z += 1
+            obsfrontiers = copy(centroids)
+            
+            z = 0
+            while z < len(centroids):
+                temppoint.point.x = centroids[z][0]
+                temppoint.point.y = centroids[z][1]
+                
+                infoCond, prob = informationProbability(mapData, [centroids[z][0], centroids[z][1]], door_length / 2)
+                if infoCond:
                     centroids = delete(centroids, (z), axis=0)
                     z = z-1
                 z += 1
@@ -224,8 +261,15 @@ def node():
             p.y = centroids[q][1]
             pp.append(copy(p))
         points_clust.points = pp
+        pp = []
+        for q in range(0, len(obsfrontiers)):
+            p.x = obsfrontiers[q][0]
+            p.y = obsfrontiers[q][1]
+            pp.append(copy(p))
+        points_filter.points = pp
         pub.publish(points)
         pub2.publish(points_clust)
+        pub3.publish(points_filter)
         rate.sleep()
         
 # -------------------------------------------------------------------------

@@ -2,11 +2,12 @@
 
 # --------Include modules---------------
 import rospy
+import math
 from copy import copy
 from nav_msgs.msg import OccupancyGrid
 from turtlebot3_aslam.msg import PointArray
 from numpy import array, delete
-from functions import robot, informationGain
+from functions import robot, informationGain, informationProbability
 from numpy.linalg import norm
 
 # Subscribers's Callbacks ------------------------------
@@ -69,8 +70,11 @@ def node():
         # -------------------------------------------------------------------------
         # Get information gain for each frontier point
         infoGain = []
+        infoProb = []
         for ip in range(0, len(centroids)):
             infoGain.append(informationGain(mapData, [centroids[ip][0], centroids[ip][1]], info_radius))
+            cond, prob = informationProbability(mapData, [centroids[ip][0], centroids[ip][1]], info_radius)
+            infoProb.append(prob)
             
         # -------------------------------------------------------------------------
         # Calculate the Information Gain of each frontier point
@@ -79,11 +83,15 @@ def node():
 
         for ip in range(0, len(centroids)):
             cost = norm(turtle.getPosition() - centroids[ip])
-            information_gain = infoGain[ip]
-            if (norm(turtle.getPosition() - centroids[ip]) <= hysteresis_radius):
-                information_gain *= hysteresis_gain
             
-            revenue = information_gain * info_multiplier - cost
+            # information_gain = infoGain[ip]
+            # if (norm(turtle.getPosition() - centroids[ip]) <= hysteresis_radius):
+            #     information_gain *= hysteresis_gain
+            
+            # revenue = information_gain * info_multiplier - cost
+            
+            information_probability = infoGain[ip]
+            revenue = information_probability * math.exp(-hysteresis_gain * cost)
                
             revenue_record.append(revenue)
             centroid_record.append(centroids[ip])
